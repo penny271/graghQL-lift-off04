@@ -17,6 +17,22 @@ export const resolvers: Resolvers = {
       return dataSources.trackAPI.getModule(id);
     },
   },
+  Mutation: {
+    // increments a track's number of views
+    // incrementTrackViews: (parent, args, contextValue, info) => {},
+    incrementTrackViews: async (_, { id }, { dataSources }) => {
+      // 更新されたトラックを返す
+      const track = await dataSources.trackAPI.incrementTrackViews(id);
+      // * しかし、このケースでは、スキーマが要求する3つのフィールド（code、success、message）が、返されたレスポンスには存在しません。なぜなら、これらはREST操作のステータスそのものに関連しているので、そのステータスに基づいてこれらの3つを設定する必要があるからです。
+      return {
+        code: 200,
+        success: true,
+        message: `Successfully incremented number of views for track ${id}`,
+        // * 返されたトラックを返すことで、クライアントが更新されたトラックを取得できるようになります。
+        track,
+      };
+    },
+  },
   Track: {
     author: ({ authorId }, _, { dataSources }) => {
       return dataSources.trackAPI.getAuthor(authorId);

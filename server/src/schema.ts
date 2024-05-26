@@ -64,9 +64,7 @@ export const typeDefs = gql`
     success: Boolean!
     "Human-readable message for the UI"
     message: String!
-    "Newly updated track after a successful mutation"
-    "The mutation might encounter errors that prevent a Track from being modified so it is nullable"
+    "Newly updated track after a successful mutation / The mutation might encounter errors that prevent a Track from being modified so it is nullable"
     track: Track
-
   }
 `;
