@@ -4,6 +4,26 @@ import { colors, mq } from "../styles";
 import { humanReadableTimeFromSeconds } from "../utils/helpers";
 import { Link } from "react-router-dom";
 import type { Track } from "../__generated__/graphql";
+// 追加 2024/05/27
+import { useMutation } from "@apollo/client";
+import { gql } from "../__generated__";
+
+/**
+ * Mutation to increment a track's number of views
+ */
+const INCREMENT_TRACK_VIEWS = gql(`
+  mutation IncrementTrackViews($incrementTrackViewsId: ID!) {
+    incrementTrackViews(id: $incrementTrackViewsId) {
+      code
+      success
+      message
+      track {
+        id
+        numberOfViews
+      }
+    }
+  }
+`);
 
 /**
  * Track Card component renders basic info in a card format
@@ -12,8 +32,25 @@ import type { Track } from "../__generated__/graphql";
 const TrackCard: React.FC<{ track: Omit<Track, "modules"> }> = ({ track }) => {
   const { title, thumbnail, author, length, modulesCount, id } = track;
 
+  // * TrackCard コンポーネントの中で、まずフックを呼び出します。最初のパラメータとして、先ほど設定した INCREMENT_TRACK_VIEWS という変異を受け取ります。
+  // * 2番目のパラメータは、変数キーを持つoptionsオブジェクトです。ここでは、incrementTrackViewsId変数を追加し、ナビゲートするトラックのidに設定します。このidはすでにtrack propからトップで構造化解除されています。
+
+  // ^ useQueryの場合とは異なり、useMutationを呼び出しても実際に自動的に変異が実行されるわけではありません！その代わりに、useMutationフックは2つの要素を持つ配列を返します。
+  // ^ 最初の要素は、後で実際に突然変異を実行するために使う mutate 関数です。これをincrementTrackViewsと呼ぶことにする。2番目の要素は、変異に関する情報（loading, error and data）を持つオブジェクトです。このコンポーネントには必要ないので、取り出す必要はありません。
+  const [incrementTrackViews] = useMutation(INCREMENT_TRACK_VIEWS, {
+    variables: { incrementTrackViewsId: id },
+    // to observe what the mutation response returns
+    onCompleted: (data) => {
+      console.log(data);
+      // {incrementTrackViews: {…}}
+      // incrementTrackViews
+      // : {code: 200, success: true, message: 'Successfully incremented number of views for track c_6', track: {…}, __typename: 'incrementTrackViewsResponse'}
+    },
+  });
+
   return (
-    <CardContainer to={`/track/${id}`}>
+    // * クリックでトラックのビュー数を増やすために、incrementTrackViews関数をonClickイベントハンドラとしてCardContainerに渡します。
+    <CardContainer to={`/track/${id}`} onClick={() => incrementTrackViews()}>
       <CardContent>
         <CardImageContainer>
           <CardImage src={thumbnail || ""} alt={title} />
